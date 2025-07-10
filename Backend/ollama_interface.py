@@ -45,7 +45,7 @@ async def get_llm_response(user_input: str, user_id: str = None) -> str:
     
     try:
         # Increased timeout to 60 seconds and added connection timeout
-        async with httpx.AsyncClient(timeout=60.0, limits=httpx.Limits(max_keepalive_connections=5, max_connections=10)) as client:
+        async with httpx.AsyncClient(timeout=60.0, limits=httpx.Limits(max_keepalive_connections=5, max_connections=10)) as client: # You can handle thousands of concurrent requests without creating thousands of threads by using async httpx req   
             response = await client.post("http://localhost:11434/api/generate", json=payload)
             result = response.json()
             return result.get("response", "I'm here for you.")

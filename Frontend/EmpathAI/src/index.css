@@ -5,13 +5,23 @@
 
   color-scheme: light dark;
   color: rgba(255, 255, 255, 0.87);
-  background-color: #5626f6;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); /* CHANGED: Replaced solid color with gradient for modern look */
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
+/* ADDED: This is crucial for centering the entire React app */
+/* The #root div is where React mounts your app */
+#root {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  width: 100%;
+} /* THIS IS WHAT CENTERED THE WHOLE APP AND SAVED US FROM THE INITIAL PROBLEM WE HAD WITH THE CENTERING OF THE APP */
 
 a {
   font-weight: 500;
@@ -28,11 +38,38 @@ body {
   place-items: center;
   min-width: 320px;
   min-height: 100vh;
+  justify-content:'center';
+}
+
+img {
+  display: block;
+  margin: auto;
+  width: 50%;
+  align-items:center
+}
+
+.center {
+  margin: 20px auto;
+  text-align: center;
+  width: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 h1 {
   font-size: 3.2em;
   line-height: 1.1;
+  text-align:'center';
+}
+
+.hover{
+  transition: all 0.3s ease;
+}
+.hover:hover{
+  /* ADDED: Enhanced shadow on hover */
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+  transform: scale(1.05);
 }
 
 .font{
@@ -55,6 +92,10 @@ button {
 }
 button:hover {
   border-color: #646cff;
+  /* ADDED: Scale effect on hover */
+  transform: scale(1.05);
+  /* ADDED: Shadow effect on hover */
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
 }
 button:focus,
 button:focus-visible {
@@ -72,4 +113,43 @@ button:focus-visible {
   button {
     background-color: #f9f9f9;
   }
+}
+
+.content-container {width: 100%;
+  /* ADDED: max-width for better responsive design */
+  max-width: 800px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  /* CHANGED: These properties actually center content vertically */
+  /* The key was adding min-height: 100vh to make container full height */
+  justify-content: center;
+  align-items: center;
+  /* ADDED: This makes the container take full viewport height */
+  min-height: 100vh;
+  /* ADDED: Padding for mobile responsiveness */
+  padding: 20px;
+  /* ADDED: Prevents padding from increasing total width */
+  box-sizing: border-box;
+}
+
+.container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+}
+
+/* ADDED: New class for the typewriter effect container */
+/* This replaces the complex inline styles you had */
+.typewriter-container {
+  margin: 30px 0;
+  padding: 2rem;
+  border-radius: 12px;
+  background: rgba(128, 0, 128, 0.8);
+  border: 3px solid rgb(162, 0, 255);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  /* ADDED: Modern glass effect */
+  backdrop-filter: blur(10px);
+  line-height: 1.5;
 }

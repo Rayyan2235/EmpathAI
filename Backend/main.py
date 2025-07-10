@@ -1,10 +1,13 @@
 from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from ollama_interface import get_llm_response
 from sentiment import get_sentiment
 from safety import check_red_flags
+
 import uvicorn
 import asyncio
+from typing import List
 from utils.logger import log_conversation
 
 
@@ -15,16 +18,26 @@ It's like telling someone "look in the Backend folder for these files" rather th
 
 
 app = FastAPI() # You're saying: "Start a web server that knows how to handle HTTP requests (like /chat) and run my custom code for those request"
-
+origins= [
+    "http://localhost:3000"
+]
+app.add_middleware(CORSMiddleware,
+                   allow_origins=origins,
+                   allow_credentials = True,
+                   allow_methods=["*"],
+                   allow_headers=["*"])
+#CORSmiddleware Blocks unauthorised requests for instanced when someone is tryna hack u
 
 class UserInput(BaseModel): #Pydantic defined like this, this is a class that defines the structure of the incoming request.
     message: str
 
+#"/chat" whatever is in the quotation marks is an arbitrary name decided by the programmer
 @app.post("/chat") #If a question is POSTed to the /chat endpoint which is the URL to fastAPI, the function below will be called
+#This /chat is not triggered by what the user inputs rather it is activated when the local server is deployed
 async def chat_with_therapist(input: UserInput, request: Request): #This function runs when someone hits the /chat endpoint. input is automatically parsed and validated from the incoming request.
     sentiment = get_sentiment(input.message) #This is a function that gets the sentiment of the message
     red_flag = check_red_flags(input.message) #This is a function that checks for red flags in the message
-    user_ip = request.client.host
+    user_ip = request.client.host #users address
 
     # sentiment is a variable that stores the sentiment of the message which refers to the tone of the users
     if red_flag:
@@ -51,6 +64,7 @@ await is a keyword used in asynchronous programming in Python. It's used to paus
 Pydantic is a powerful Python library that leverages type hints to help you easily validate and serialize your data schemas. This makes your code more robust, readable, concise, and easier to debug."""
 
 if __name__ == "__main__": #Checks if the current script is being run directly as the main program.
+    uvicorn.run(app,host="0.0.0.0", port=8000)
     print("\n=== Welcome to EmpathAI ===")
     print("I'm your AI therapist, ready to listen and support you.")
     print("Type 'quit' to end the conversation.")
