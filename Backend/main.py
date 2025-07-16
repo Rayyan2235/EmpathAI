@@ -1,15 +1,14 @@
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from ollama_interface import get_llm_response
 from sentiment import get_sentiment
 from safety import check_red_flags
-
 import uvicorn
 import asyncio
 from typing import List
 from utils.logger import log_conversation
-
+import httpx
+from Therapist_Agent import get_llm_response
 
 
 ''' we specify 'Backend' because of how Python's module system works when running a package from outside its directory: Python needs to know the full path to find the modules, even if they're in the same folder
@@ -30,6 +29,26 @@ app.add_middleware(CORSMiddleware,
 
 class UserInput(BaseModel): #Pydantic defined like this, this is a class that defines the structure of the incoming request.
     message: str
+
+""'''# --- Ollama LLM call logic ---
+async def get_llm_response(message, user_id):
+    """
+    Calls the Ollama LLM API to generate a response for the given message.
+    Args:
+        message (str): The user's message.
+        user_id (str): The user's unique identifier (can be used for context/history if needed).
+    Returns:
+        str: The AI's text response.
+    """
+    # Optionally, you can load conversation history here for context
+    prompt = message  # For now, just use the message. You can add history if desired.
+    async with httpx.AsyncClient() as client:
+        response = await client.post(
+            "http://localhost:11434/api/generate",  # Update if your Ollama endpoint is different
+            json={"model": "your-model-name", "prompt": prompt}
+        )
+        data = response.json()
+        return data["response"]  # Adjust this key if your Ollama API returns a different structure'''""
 
 #"/chat" whatever is in the quotation marks is an arbitrary name decided by the programmer
 @app.post("/chat") #If a question is POSTed to the /chat endpoint which is the URL to fastAPI, the function below will be called
