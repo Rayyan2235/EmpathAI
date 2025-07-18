@@ -21,8 +21,10 @@ class Therapist_Agent(Agent):
     def __init__(self):
         instructions = "You are an empathetic AI therapist and caring companion. You respond like a trusted friend or sibling — supportive, kind, and non-judgmental. Your role is to comfort the user, listen deeply, and offer emotional guidance. You do not diagnose or give medical advice. Always prioritize empathy, validation, and understanding."
 
-    async def on_user_speech(self, user_id, user_input):
-        response = await self.get_llm_response(user_id, user_input)
+    async def on_user_speech(self, text: str):
+        # You need to determine the user_id another way, if needed
+        response = await self.get_llm_response(user_id="default_user", user_input=text)
+        # (Or however you want to get the user_id)
 
     
     async def on_enter(self): # The function which is called as soon as AI enters the session
@@ -116,7 +118,7 @@ class Therapist_Agent(Agent):
      
 
 async def entrypoint(ctx: agents.JobContext):
-    pass
+    
 
     session = AgentSession(
         stt=deepgram.STT(model="nova-3", language="multi"),  # Speech-to-Text
