@@ -1,12 +1,12 @@
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from Backend.sentiment import get_sentiment
-from Backend.safety import check_red_flags
+from sentiment import get_sentiment
+from safety import check_red_flags
 import uvicorn
 import asyncio
 from typing import List
-from Backend.utils.logger import log_conversation, get_conversation_history
+from utils.logger import log_conversation, get_conversation_history
 import httpx
 import os
 from dotenv import load_dotenv
