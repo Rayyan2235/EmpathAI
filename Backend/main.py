@@ -1,14 +1,16 @@
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from sentiment import get_sentiment
-from safety import check_red_flags
+from Backend.sentiment import get_sentiment
+from Backend.safety import check_red_flags
 import uvicorn
 import asyncio
 from typing import List
-from utils.logger import log_conversation
+from Backend.utils.logger import log_conversation, get_conversation_history
 import httpx
-from Therapist_Agent import get_llm_response
+import os
+from dotenv import load_dotenv
+load_dotenv()
 
 
 ''' we specify 'Backend' because of how Python's module system works when running a package from outside its directory: Python needs to know the full path to find the modules, even if they're in the same folder
@@ -30,8 +32,9 @@ app.add_middleware(CORSMiddleware,
 class UserInput(BaseModel): #Pydantic defined like this, this is a class that defines the structure of the incoming request.
     message: str
 
-""'''# --- Ollama LLM call logic ---
-async def get_llm_response(message, user_id):
+OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "llama3")
+
+async def get_llm_response(user_id, user_input):
     """
     Calls the Ollama LLM API to generate a response for the given message.
     Args:
@@ -40,15 +43,28 @@ async def get_llm_response(message, user_id):
     Returns:
         str: The AI's text response.
     """
-    # Optionally, you can load conversation history here for context
-    prompt = message  # For now, just use the message. You can add history if desired.
-    async with httpx.AsyncClient() as client:
+    # Load recent conversation history
+    history = get_conversation_history(user_id, limit=5)
+
+    # Prepare the prompt for Ollama using history and new input
+    prompt = ""
+    for entry in history:
+        prompt += f"User: {entry['user_message']}\nAI: {entry['response']}\n"
+    prompt += f"User: {user_input}\nAI:"
+
+    # Call Ollama LLM API directly
+    async with httpx.AsyncClient(timeout=120.0) as client:
         response = await client.post(
-            "http://localhost:11434/api/generate",  # Update if your Ollama endpoint is different
-            json={"model": "your-model-name", "prompt": prompt}
+            "http://localhost:11434/api/generate", # Update if your Ollama endpoint is different
+            json={"model": OLLAMA_MODEL, "prompt": prompt, "stream": False}
         )
         data = response.json()
-        return data["response"]  # Adjust this key if your Ollama API returns a different structure'''""
+        ai_response = data["response"]
+
+    # Save the conversation
+    log_conversation(user_id, user_input, ai_response)
+
+    return ai_response
 
 #"/chat" whatever is in the quotation marks is an arbitrary name decided by the programmer
 @app.post("/chat") #If a question is POSTed to the /chat endpoint which is the URL to fastAPI, the function below will be called
@@ -67,8 +83,7 @@ async def chat_with_therapist(input: UserInput, request: Request): #This functio
             "response": response
         }
 
-    reply = await get_llm_response(input.message, user_id=user_ip)
-    log_conversation(user_id=user_ip, message=input.message, response=reply)
+    reply = await get_llm_response(user_id=user_ip, user_input=input.message)
     return {
         "sentiment": sentiment,
         "response": reply
@@ -81,6 +96,44 @@ KEY WORDS:
 await is a keyword used in asynchronous programming in Python. It's used to pause the execution of an async function until an awaited task completes. In this case, it's waiting for get_llm_response() to finish processing.
 
 Pydantic is a powerful Python library that leverages type hints to help you easily validate and serialize your data schemas. This makes your code more robust, readable, concise, and easier to debug."""
+
+# --- LiveKit Token Generation Endpoint ---
+import jwt
+import time
+
+def generate_livekit_token(api_key, api_secret, identity, room):
+    now = int(time.time())
+    payload = {
+        'iss': api_key,
+        'sub': identity,
+        'iat': now,
+        'nbf': now,
+        'exp': now + 3600,  # Token valid for 1 hour
+        'video': {
+            'room': room,
+            'roomJoin': True,
+            'canPublish': True,
+            'canSubscribe': True,
+        }
+    }
+    return jwt.encode(payload, api_secret, algorithm='HS256')
+
+
+'''We created a token generator in the main.py file for the frontend such that it can call upon main.py when trying to enter the livekit room'''
+@app.get("/get-livekit-token")
+def get_livekit_token_endpoint(identity: str, room: str):
+    """
+    Generate a LiveKit access token for a given identity and room.
+    Usage: /get-livekit-token?identity=user1&room=therapy-room-29qop6
+    """
+    api_key = os.getenv("LIVEKIT_API_KEY")
+    api_secret = os.getenv("LIVEKIT_API_SECRET")
+    if not api_key or not api_secret:
+        return {"error": "LIVEKIT_API_KEY or LIVEKIT_API_SECRET not set in .env"}
+
+    token = generate_livekit_token(api_key, api_secret, identity=identity, room=room)
+    return {"token": token}
+
 
 if __name__ == "__main__": #Checks if the current script is being run directly as the main program.
     uvicorn.run(app,host="0.0.0.0", port=8000)
