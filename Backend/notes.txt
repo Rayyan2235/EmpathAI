@@ -1,0 +1,25 @@
+main.py (FastAPI Functionality):
+    Start the fastAPI server and load it 
+    
+    Need to allow frontend to access the backend using cors.middleware
+
+    Need to let the backend know what kind of request is gonna come up from the frontend
+
+    call for tokenRequest (So when the frontend accesses the backend using the cors.middleware, it calls this func to get token from the token_gen function)
+
+    Initially, the frontend will reach to the main.py file and will then be directed to the token_gen file with the room_id and user_id of the user and ask to return a token in json format
+
+Token_gen:
+    Load env file
+    get the Livekit key using os
+    using the userid and roomid, generate a token
+    
+    return the token
+
+Frontend:
+
+    Needs to fetch the fastAPI backend for the livekit tokens
+
+
+
+

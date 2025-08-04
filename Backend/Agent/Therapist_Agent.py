@@ -9,7 +9,6 @@ from livekit.plugins import (
     silero,
 )
 from livekit.plugins.turn_detector.multilingual import MultilingualModel
-#import dotenv
 
 load_dotenv()
 '''This makes the token for the AI agent (therapist) to join th elivekit room'''
