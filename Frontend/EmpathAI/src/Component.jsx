@@ -1,10 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import VoiceRoom from './VoiceRoom';
 import cat from './assets/Smiling-Cat.jpg';
 import { Typewriter } from 'react-simple-typewriter';
-
-// --- LiveKit Imports ---
-import { Room, RoomEvent } from 'livekit-client';
 
 // --- LiveKit Connection Details ---
 // IMPORTANT: Replace with your actual LiveKit URL from your cloud dashboard.
@@ -34,122 +31,13 @@ function TypingEffect() {
     );
 }
 
-/**
- * This component handles the entire LiveKit voice connection lifecycle.
- */
-function LiveKitVoice() {
-    const [connectionStatus, setConnectionStatus] = useState("Disconnected");
-    const [room, setRoom] = useState(null);
-
-    useEffect(() => {
-        // This function will run when the component mounts (e.g., when you click the "Chat" tab)
-        const connectToLiveKit = async () => {
-            setConnectionStatus("Connecting...");
-            try {
-                // 1. Create a unique identity for the current user
-                const identity = "user-" + Math.random().toString(16).slice(2);
-
-                // 2. Fetch an access token from our backend server
-                const response = await fetch(`${TOKEN_ENDPOINT}?identity=${identity}&room=${LIVEKIT_ROOM}`);
-                if (!response.ok) {
-                    const error = await response.json();
-                    throw new Error(error.error || "Failed to fetch token");
-                }
-                const data = await response.json();
-                const token = data.token;
-
-                // 3. Create a new Room instance and set up event listeners
-                const newRoom = new Room();
-
-                // Handle incoming audio tracks from other participants (like our AI agent)
-                newRoom.on(RoomEvent.TrackSubscribed, (track, publication, participant) => {
-                    if (track.kind === "audio") {
-                        // Attach the audio track to an <audio> element and play it
-                        const audioElement = track.attach();
-                        document.body.appendChild(audioElement);
-                    }
-                });
-                
-                // 4. Connect to the room using the URL and token
-                await newRoom.connect(LIVEKIT_URL, token);
-                setConnectionStatus(`Connected to room: ${LIVEKIT_ROOM}`);
-                
-                // 5. Enable the user's microphone and publish it to the room
-                await newRoom.localParticipant.setMicrophoneEnabled(true);
-                setRoom(newRoom);
-
-            } catch (error) {
-                console.error("LiveKit connection failed:", error);
-                setConnectionStatus(`Failed: ${error.message}`);
-            }
-        };
-
-        connectToLiveKit();
-
-        // This is a cleanup function that runs when the component is unmounted
-        return () => {
-            if (room) {
-                console.log("Disconnecting from LiveKit room.");
-                room.disconnect();
-            }
-        };
-    }, []); // The empty array [] means this effect runs only once when the component mounts
-
-    return <div className="connection-status">Voice Status: {connectionStatus}</div>;
-}
-
 function Chat() {
-    const [messages, setMessages] = useState([]);
-    const [input, setInput] = useState("");
-    const inputRef = useRef(null);
-
-    useEffect(() => {
-        if (inputRef.current) {
-            inputRef.current.focus();
-        }
-    }, []);
-
-    const sendMessage = async () => {
-        if (!input.trim()) return;
-        const newMessages = [...messages, { sender: "user", text: input }];
-        setMessages(newMessages);
-        setInput("");
-
-        try {
-            const response = await fetch("http://localhost:8000/chat", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ message: input }),
-            });
-            const data = await response.json();
-            setMessages([...newMessages, { sender: "ai", text: data.response }]);
-        } catch (error) {
-            console.error("Error fetching AI response:", error);
-            setMessages([...newMessages, { sender: "ai", text: "Sorry, I'm having trouble connecting." }]);
-        }
-    };
-
     return (
-        <div className="chat-container">
-            {/* The LiveKitVoice component is added here to manage the voice connection */}
-            <LiveKitVoice />
-            <div className="messages">
-                {messages.map((msg, index) => (
-                    <div key={index} className={`message ${msg.sender}`}>
-                        {msg.text}
-                    </div>
-                ))}
-            </div>
-            <div className="input-area">
-                <input
-                    ref={inputRef}
-                    type="text"
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    onKeyPress={(e) => e.key === "Enter" && sendMessage()}
-                    placeholder="Type a message..."
-                />
-                <button onClick={sendMessage}>Send</button>
+        <div>
+            <h2 className="text-3xl font-bold mb-4">Chat with EmpathAI</h2>
+            <p className="mb-4">Start a conversation with your AI therapist.</p>
+            <div className="bg-gray-800 p-4 rounded-lg mb-4">
+                <p className="text-gray-300">Text chat functionality will be implemented here.</p>
             </div>
         </div>
     );
@@ -172,19 +60,28 @@ function Component() {
                     <ul>
                         <li className="mb-4"><a href="#" onClick={() => setActiveTab("Home")} className="hover:text-gray-300">Home</a></li>
                         <li className="mb-4"><a href="#" onClick={() => setActiveTab("Chat")} className="hover:text-gray-300">Chat</a></li>
+                        <li className="mb-4">
+                            <button 
+                                onClick={() => setShowVoiceRoom(true)} 
+                                className="text-left w-full hover:text-gray-300 bg-purple-600 hover:bg-purple-700 px-3 py-2 rounded-lg transition-colors duration-200"
+                            >
+                                🎙️ Voice Room
+                            </button>
+                        </li>
                         <li className="mb-4"><a href="#" onClick={() => setActiveTab("Settings")} className="hover:text-gray-300">Settings</a></li>
                     </ul>
                 </nav>
             </div>
 
             <div className="flex-1 flex flex-col">
-                <header className="p-4 bg-gray-800 md:hidden">
-                <button
-                    onClick={() => setShowVoiceRoom(true)}
-                >
-            Voice Settings / Mic Controls
-        </button>
-                    <button onClick={() => setIsSidebarOpen(!isSidebarOpen)}>
+                <header className="p-4 bg-gray-800 flex justify-between items-center">
+                    <button 
+                        onClick={() => setShowVoiceRoom(true)}
+                        className="md:hidden bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded-lg transition-colors duration-200"
+                    >
+                        🎙️ Voice Room
+                    </button>
+                    <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="md:hidden">
                         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
                     </button>
                 </header>

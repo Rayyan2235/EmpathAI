@@ -11,6 +11,8 @@ This file makes the Backend directory a Python package.
 
 # Import main components for easy access
 from . import detection
+from . import Token_Generator
+from . import Therapist_Agent
 
 __version__ = "1.0.0"
-__all__ = ['detection']
+__all__ = ['detection', 'Token_Generator', 'Therapist_Agent']

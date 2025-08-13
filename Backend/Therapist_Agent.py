@@ -5,11 +5,11 @@ from livekit.agents import AgentSession, Agent, RoomInputOptions
 from livekit.plugins import (
     cartesia,
     deepgram,
+    openai,
     noise_cancellation,
     silero,
 )
 from livekit.plugins.turn_detector.multilingual import MultilingualModel
-#import dotenv
 
 load_dotenv()
 '''This makes the token for the AI agent (therapist) to join th elivekit room'''
@@ -27,6 +27,7 @@ class Therapist_Agent(Agent):
 async def entrypoint(ctx: agents.JobContext):
     session = AgentSession(
         stt=deepgram.STT(model="nova-3", language="multi"),  # Speech-to-Text
+        llm=openai.LLM(model="gpt-4o-mini"),
         tts=cartesia.TTS(),                                  # Text-to-Speech
         vad=silero.VAD.load(),                              # Voice Activity Detection
         turn_detection=MultilingualModel(),                  # Turn Detection

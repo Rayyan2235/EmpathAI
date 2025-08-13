@@ -1,5 +1,5 @@
 
 
-from . import livekit_token_generator
+from .livekit_token import generate_token
 
-__all__ = ['livekit_token_generator']
+__all__ = ['generate_token']
